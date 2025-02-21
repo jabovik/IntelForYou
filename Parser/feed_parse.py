@@ -1,39 +1,34 @@
 import feedparser
-class Enclosures:
-    def __init__(self, enclosures):
-        self.enclosures =enclosures
-        self.url = []
-        self.type = []
-        for i in enclosures:
-            self.url.append(i.url)
-            self.type.append(i.type)
+class Enclosure:
+    def __init__(self, enclosure):
+        self.link = enclosure.url
+        self.type = enclosure.type
         
 class FeedArticle:
-    def __init__(self, link, pubDate, title, description, enclosures):
+    def __init__(self, link, published, title, summary, enclosures, source):
         self.link = link
-        self.pubDate = pubDate
+        self.published = published # tuple(YEAR, MONTH, DAY, HOUR, MINUTE, SECOND, WEEK DAY(0-6), YEAR DAY, DST flag)
         self.title = title
-        self.description = description
+        self.summary = summary
         self.enclosures = enclosures
+        self.type = "feed"
+        self.source = source
+        self.embedding = None
+
+class FeedParser:
+    def __init__(self,url):
+        self.url =url
         
-def feed_parse(url):
-    """_summary_
-
-    Args:
-        url (string): feed url to parse
-
-    Returns:
-        FeedArticle[]: list of articles
-    """
-    articles = []
-    rss = feedparser.parse(url)
-    for entry in rss.entries:
-        articles.append(FeedArticle(
-            entry.link,
-            entry.published_parsed,
-            entry.title,
-            entry.description,
-            Enclosures(entry.enclosures)
-        ))
-    return articles
-    
+    def feed_parse(self) -> list[FeedArticle]:
+        articles = []
+        rss = feedparser.parse(self.url)
+        for entry in rss.entries:
+            articles.append(FeedArticle(
+                link= entry.link,
+                published = str(entry.published_parsed),
+                title= entry.title,
+                summary= entry.summary,
+                enclosures = [Enclosure(i) for i in entry.enclosures],
+                source = rss.feed.title
+            ))
+        return articles
